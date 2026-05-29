@@ -12,17 +12,17 @@ import os
 
 from app.config import config
 from loguru import logger
-from app.api import chat, health, file, aiops, orchestration
+from app.api import chat, health, file, aiops, orchestration, doc_process
 from app.core.milvus_client import milvus_manager
 from app.tools.feishu_ws_bot import start_feishu_ws_client
-from app.services.rag_agent_service import rag_agent
+from app.services.rag_agent_service import rag_agent_service
 
 
 async def handle_feishu_message(open_id: str, text: str) -> str:
     """处理飞书消息，调用 RAG Agent"""
     try:
         logger.info(f"处理飞书消息: open_id={open_id}, text={text}")
-        result = await rag_agent.query(text)
+        result = await rag_agent_service.query(text)
         answer = result.get("answer", "处理中，请稍候...")
         return answer
     except Exception as e:
@@ -87,6 +87,7 @@ app.include_router(chat.router, prefix="/api", tags=["对话"])
 app.include_router(file.router, prefix="/api", tags=["文件管理"])
 app.include_router(aiops.router, prefix="/api", tags=["AIOps智能运维"])
 app.include_router(orchestration.router, prefix="/api", tags=["编排服务"])
+app.include_router(doc_process.router, prefix="/api", tags=["文档处理"])
 
 # 挂载静态文件
 static_dir = "static"

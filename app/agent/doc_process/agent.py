@@ -55,10 +55,7 @@ def trim_messages_middleware(state: DocProcessState) -> dict[str, Any] | None:
     logger.debug(f"修剪消息历史: {len(messages)} -> {len(new_messages)} 条")
 
     return {
-        "messages": [
-            RemoveMessage(id="remove_all"),
-            *new_messages
-        ]
+        "messages": new_messages
     }
 
 
@@ -108,12 +105,15 @@ class DocProcessAgent:
         if self._agent_initialized:
             return
 
-        # 使用全局 MCP 客户端管理器
-        mcp_client = await get_mcp_client_with_retry()
-        mcp_tools = await mcp_client.get_tools()
-        logger.info(f"成功加载 {len(mcp_tools)} 个 MCP 工具")
-
-        self.mcp_tools = mcp_tools
+        # 尝试加载 MCP 工具，如果失败则只使用本地工具
+        self.mcp_tools = []
+        try:
+            mcp_client = await get_mcp_client_with_retry()
+            mcp_tools = await mcp_client.get_tools()
+            logger.info(f"成功加载 {len(mcp_tools)} 个 MCP 工具")
+            self.mcp_tools = mcp_tools
+        except Exception as e:
+            logger.warning(f"MCP 工具加载失败，将只使用本地工具: {e}")
 
         # 合并所有工具
         all_tools = self.tools + self.mcp_tools

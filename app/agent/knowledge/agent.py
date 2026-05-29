@@ -72,7 +72,7 @@ class KnowledgeAgent:
         Args:
             streaming: 是否启用流式输出，默认为 True
         """
-        self.model_name = config.llm_model
+        self.model_name = config.rag_model
         self.streaming = streaming
         self.system_prompt = self._build_system_prompt()
 

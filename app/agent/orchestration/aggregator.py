@@ -69,7 +69,7 @@ async def aggregator(state: OrchestrationState) -> OrchestrationState:
         from app.config import config
 
         llm = ChatQwen(
-            model=config.llm_model,
+            model=config.dashscope_model,
             api_key=config.dashscope_api_key,
             temperature=0.7,
         )

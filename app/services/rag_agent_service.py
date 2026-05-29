@@ -10,11 +10,10 @@ from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import (
     BaseMessage,
     HumanMessage,
-    RemoveMessage,
     SystemMessage,
 )
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph.message import REMOVE_ALL_MESSAGES, add_messages
+from langgraph.graph.message import add_messages
 from loguru import logger
 from typing_extensions import TypedDict
 from langchain_qwq import ChatQwen
@@ -66,10 +65,7 @@ def trim_messages_middleware(state: AgentState) -> dict[str, Any] | None:
     logger.debug(f"修剪消息历史: {len(messages)} -> {len(new_messages)} 条")
 
     return {
-        "messages": [
-            RemoveMessage(id=REMOVE_ALL_MESSAGES),
-            *new_messages
-        ]
+        "messages": new_messages
     }
 
 
