@@ -1,0 +1,15 @@
+Resolved 13 packages in 1.47s
+Downloading lark-oapi (6.8MiB)
+Downloading pycryptodome (1.7MiB)
+ Downloaded pycryptodome
+ Downloaded lark-oapi
+Prepared 3 packages in 26.38s
+Uninstalled 1 package in 87ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 3 packages in 1m 07s
+ + lark-oapi==1.6.7
+ + pycryptodome==3.23.0
+ - websockets==16.0
+ + websockets==15.0.1

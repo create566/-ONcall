@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     # Firecrawl 配置
     mcp_firecrawl_api_key: str = "fc-9ddd198f89da44b4a9681f33ad719c0c"
 
+    # 飞书配置
+    feishu_webhook_url: str = "https://open.feishu.cn/open-apis/bot/v2/hook/dccf310b-0184-4c2a-9944-6a36febc8a27"
+    feishu_enabled: bool = True
+    feishu_app_id: str = "cli_aa93d9202afa5bd9"
+    feishu_app_secret: str = "4muhsqpI7Rno2YOdofE3tbx0rtMiHOhO"
+
     @property
     def mcp_servers(self) -> Dict[str, Dict[str, Any]]:
         """获取完整的 MCP 服务器配置"""
