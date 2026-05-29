@@ -53,6 +53,12 @@ class Settings(BaseSettings):
     mcp_supabase_url: str = "https://uhkijolcmoxjkoznhpvl.supabase.co"
     mcp_filesystem_path: str = r"D:\桌面\智能仓库"
 
+    # Exa Web Search 配置
+    mcp_exa_api_key: str = "d50aee63-4d8c-450c-b86a-8c8c447dff5e"
+
+    # Firecrawl 配置
+    mcp_firecrawl_api_key: str = "fc-9ddd198f89da44b4a9681f33ad719c0c"
+
     @property
     def mcp_servers(self) -> Dict[str, Dict[str, Any]]:
         """获取完整的 MCP 服务器配置"""
@@ -64,14 +70,27 @@ class Settings(BaseSettings):
             "monitor": {
                 "transport": self.mcp_monitor_transport,
                 "url": self.mcp_monitor_url,
-            }
-        }
-        # 仅当 SUPABASE_API_KEY 配置后才添加
-        if hasattr(self, 'supabase_api_key') and self.supabase_api_key:
-            servers["supabase"] = {
+            },
+            "supabase": {
                 "transport": self.mcp_supabase_transport,
                 "url": self.mcp_supabase_url,
-            }
+            },
+            "exa-web-search": {
+                "transport": "stdio",
+                "command": "npx",
+                "args": ["-y", "exa-mcp-server"],
+            },
+            "firecrawl": {
+                "transport": "stdio",
+                "command": "npx",
+                "args": ["-y", "firecrawl-mcp"],
+            },
+            "filesystem": {
+                "transport": "stdio",
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-filesystem", self.mcp_filesystem_path],
+            },
+        }
         return servers
 
 
