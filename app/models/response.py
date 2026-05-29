@@ -4,7 +4,56 @@
 """
 
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Generic, TypeVar
+
+
+class UnifiedResponse(BaseModel, Generic[TypeVar("T")]):
+    """统一响应格式
+
+    所有 API 统一返回格式:
+    {
+        "code": 200,
+        "message": "success",
+        "data": {
+            "success": true,
+            "result": "实际结果",
+            "errorMessage": null
+        }
+    }
+    """
+
+    code: int = Field(200, description="状态码，200表示成功")
+    message: str = Field("success", description="状态信息")
+    data: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="数据内容，固定包含 success, result, errorMessage 三个字段"
+    )
+
+    @classmethod
+    def success(cls, result: Any = None, message: str = "success"):
+        """构建成功响应"""
+        return cls(
+            code=200,
+            message=message,
+            data={
+                "success": True,
+                "result": result,
+                "errorMessage": None
+            }
+        )
+
+    @classmethod
+    def error(cls, error_message: str, code: int = 500):
+        """构建错误响应"""
+        return cls(
+            code=code,
+            message="error",
+            data={
+                "success": False,
+                "result": None,
+                "errorMessage": error_message
+            }
+        )
 
 
 class ChatResponse(BaseModel):

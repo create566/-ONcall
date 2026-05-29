@@ -127,6 +127,30 @@ python -c "import requests, os, time; [requests.post('http://localhost:9900/api/
 - **Web 界面**: http://localhost:9900
 - **API 文档**: http://localhost:9900/docs
 
+### 📋 启动顺序
+
+启动服务需按以下顺序进行。**点击下面的链接即可启动对应服务**：
+
+| 步骤 | 服务 | 端口 | 点击启动 |
+|------|------|------|----------|
+| 1 | Docker Desktop | - | 手动启动 Milvus |
+| 2 | CLS MCP | 8003 | [启动 CLS MCP](启动-CLS-MCP-8003.bat) |
+| 3 | Monitor MCP | 8004 | [启动 Monitor MCP](启动-Monitor-MCP-8004.bat) |
+| 4 | FastAPI 后端 | 9900 | [启动 FastAPI](启动-FastAPI-9900.bat) |
+
+**或使用一键启动脚本：**
+```powershell
+.\start-windows.bat
+```
+
+**服务地址汇总：**
+| 服务 | 端口 | 地址 |
+|------|------|------|
+| FastAPI 后端 | 9900 | http://localhost:9900 |
+| CLS MCP | 8003 | http://localhost:8003/mcp |
+| Monitor MCP | 8004 | http://localhost:8004/mcp |
+| Milvus | 19530 | localhost:19530 |
+
 ## 📡 API 接口
 
 ### 核心接口

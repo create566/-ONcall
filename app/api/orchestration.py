@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from loguru import logger
 
 from app.agent.orchestration.supervisor import supervisor_service
+from app.models.response import UnifiedResponse
 
 router = APIRouter()
 
@@ -50,7 +51,8 @@ class OrchestrateResponse(BaseModel):
                 "data": {
                     "success": True,
                     "intent": "knowledge",
-                    "response": "这是查询结果..."
+                    "result": "这是查询结果...",
+                    "errorMessage": None
                 }
             }
         }
@@ -98,9 +100,11 @@ async def orchestrate(request: OrchestrateRequest):
             session_id=session_id
         ):
             event_type = event.get("type", "unknown")
+            logger.info(f"[会话 {session_id}] 收到编排事件: type={event_type}, event={event}")
 
             if event_type == "intent_detected":
                 intent = event.get("intent")
+                logger.info(f"[会话 {session_id}] 识别到 intent: {intent}")
 
             elif event_type == "complete":
                 final_response = event.get("response", "")
@@ -115,42 +119,20 @@ async def orchestrate(request: OrchestrateRequest):
                 break
 
         if error_message:
-            return {
-                "code": 500,
-                "message": "error",
-                "data": {
-                    "success": False,
-                    "intent": intent,
-                    "response": None,
-                    "errorMessage": error_message
-                }
-            }
+            return UnifiedResponse.error(error_message=error_message).model_dump()
 
         logger.info(f"[会话 {session_id}] 编排完成，intent={intent}")
 
-        return {
-            "code": 200,
-            "message": "success",
-            "data": {
-                "success": True,
+        return UnifiedResponse.success(
+            result={
                 "intent": intent or "unknown",
-                "response": final_response or "",
-                "errorMessage": None
+                "response": final_response or ""
             }
-        }
+        ).model_dump()
 
     except Exception as e:
         logger.error(f"[会话 {session_id}] 编排接口错误: {e}", exc_info=True)
-        return {
-            "code": 500,
-            "message": "error",
-            "data": {
-                "success": False,
-                "intent": None,
-                "response": None,
-                "errorMessage": str(e)
-            }
-        }
+        return UnifiedResponse.error(error_message=str(e)).model_dump()
 
 
 @router.post("/orchestrate_stream")
@@ -353,11 +335,7 @@ async def get_circuit_breaker_status():
     """
     try:
         status = supervisor_service.get_circuit_breaker_status()
-        return {
-            "code": 200,
-            "message": "success",
-            "data": status
-        }
+        return UnifiedResponse.success(result=status).model_dump()
     except Exception as e:
         logger.error(f"获取熔断器状态错误: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return UnifiedResponse.error(error_message=str(e)).model_dump()

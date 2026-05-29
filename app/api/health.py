@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from app.config import config
 from app.core.milvus_client import milvus_manager
+from app.models.response import UnifiedResponse
 from loguru import logger
 
 router = APIRouter()
@@ -53,12 +54,15 @@ async def health_check():
         health_data["error"] = "数据库不可用"
     
     health_data["status"] = overall_status
-    
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "code": status_code,
-            "message": "服务运行正常" if overall_status == "healthy" else "服务不可用",
-            "data": health_data
-        }
-    )
+
+    # 根据健康状态返回不同格式
+    if overall_status == "healthy":
+        return JSONResponse(
+            status_code=status_code,
+            content=UnifiedResponse.success(result=health_data).model_dump()
+        )
+    else:
+        return JSONResponse(
+            status_code=status_code,
+            content=UnifiedResponse.error(error_message="服务不可用: " + health_data.get("error", "未知错误")).model_dump()
+        )

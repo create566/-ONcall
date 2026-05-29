@@ -7,7 +7,7 @@ import json
 from fastapi import APIRouter, HTTPException
 from sse_starlette.sse import EventSourceResponse
 from app.models.request import ChatRequest, ClearRequest
-from app.models.response import SessionInfoResponse, ApiResponse
+from app.models.response import SessionInfoResponse, ApiResponse, UnifiedResponse
 from app.services.rag_agent_service import rag_agent_service
 from loguru import logger
 
@@ -17,12 +17,14 @@ router = APIRouter()
 @router.post("/chat")
 async def chat(request: ChatRequest):
     """快速对话接口
+
+    统一响应格式:
     {
         "code": 200,
         "message": "success",
         "data": {
             "success": true,
-            "answer": "回答内容",
+            "result": "回答内容",
             "errorMessage": null
         }
     }
@@ -42,27 +44,11 @@ async def chat(request: ChatRequest):
 
         logger.info(f"[会话 {request.id}] 快速对话完成")
 
-        return {
-            "code": 200,
-            "message": "success",
-            "data": {
-                "success": True,
-                "answer": answer,
-                "errorMessage": None
-            }
-        }
+        return UnifiedResponse.success(result=answer)
 
     except Exception as e:
         logger.error(f"对话接口错误: {e}")
-        return {
-            "code": 500,
-            "message": "error",
-            "data": {
-                "success": False,
-                "answer": None,
-                "errorMessage": str(e)
-            }
-        }
+        return UnifiedResponse.error(error_message=str(e))
 
 
 @router.post("/chat_stream")

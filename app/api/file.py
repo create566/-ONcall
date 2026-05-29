@@ -6,6 +6,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.services.vector_index_service import vector_index_service
+from app.models.response import UnifiedResponse
 from loguru import logger
 
 router = APIRouter()
@@ -74,27 +75,21 @@ async def upload_file(file: UploadFile = File(...)):
             logger.info(f"向量索引创建成功: {file_path}")
         except Exception as e:
             logger.error(f"向量索引创建失败: {file_path}, 错误: {e}")
-            # 注意：即使索引失败，文件上传仍然成功，只是记录错误日志
 
         # 6. 返回响应
-        return JSONResponse(
-            status_code=200,
-            content={
-                "code": 200,
-                "message": "success",
-                "data": {
-                    "filename": safe_filename,
-                    "file_path": str(file_path),
-                    "size": len(content),
-                },
-            },
-        )
+        return UnifiedResponse.success(
+            result={
+                "filename": safe_filename,
+                "file_path": str(file_path),
+                "size": len(content),
+            }
+        ).model_dump()
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"文件上传失败: {e}")
-        raise HTTPException(status_code=500, detail=f"文件上传失败: {e}")
+        return UnifiedResponse.error(error_message=str(e)).model_dump()
 
 
 @router.post("/index_directory")
@@ -114,18 +109,11 @@ async def index_directory(directory_path: str = None):
         # 执行索引
         result = vector_index_service.index_directory(directory_path)
 
-        return JSONResponse(
-            status_code=200,
-            content={
-                "code": 200,
-                "message": "success" if result.success else "partial_success",
-                "data": result.to_dict(),
-            },
-        )
+        return UnifiedResponse.success(result=result.to_dict()).model_dump()
 
     except Exception as e:
         logger.error(f"索引目录失败: {e}")
-        raise HTTPException(status_code=500, detail=f"索引目录失败: {e}")
+        return UnifiedResponse.error(error_message=str(e)).model_dump()
 
 
 def _get_file_extension(filename: str) -> str:

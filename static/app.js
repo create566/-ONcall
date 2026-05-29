@@ -712,8 +712,8 @@ class SuperBizAgentApp {
 
             // 统一响应格式：检查 data.code 或 data.message 判断请求是否成功
             if (data.code === 200 || data.message === 'success') {
-                // 尝试从 data.data 或直接 data 获取响应内容
-                const answer = data.data?.answer || data.answer || data.content || '（无回复内容）';
+                // 统一格式：data.data.result 或 data.data.response 或 data.result
+                const answer = data.data?.result || data.data?.response || data.result || data.answer || data.content || '（无回复内容）';
                 this.addMessage('assistant', answer);
             } else {
                 // HTTP 成功但业务失败
@@ -808,10 +808,11 @@ class SuperBizAgentApp {
 
                                 if (sseMessage && typeof sseMessage.type === 'string') {
                                     // 处理 orchestrate_stream 的 SSE 事件类型
-                                    if (sseMessage.type === 'content' || sseMessage.type === 'intent_detected' || sseMessage.type === 'agent_complete' || sseMessage.type === 'aggregated') {
-                                        const content = sseMessage.data || sseMessage.content || '';
-                                        fullResponse += content;
-                                        console.log('[SSE调试] 添加内容:', content);
+                                if (sseMessage.type === 'content') {
+                                    // 只有 content 类型的事件才累积到 fullResponse
+                                    const content = sseMessage.data || sseMessage.content || '';
+                                    fullResponse += content;
+                                    console.log('[SSE调试] 添加内容:', content);
 
                                         // 实时渲染 Markdown
                                         if (assistantMessageElement) {
@@ -1653,6 +1654,7 @@ class SuperBizAgentApp {
 
             // 处理响应
             if (data.code === 200 || data.message === 'success') {
+                // 统一格式：data.data.result
                 const result = data.data?.result || data.result || data.content || '文件处理完成';
                 this.addMessage('assistant', result);
             } else {

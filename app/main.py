@@ -45,6 +45,16 @@ async def lifespan(app: FastAPI):
     milvus_manager.connect()
     logger.info("✅ Milvus 连接成功")
 
+    # 预热 MCP 客户端
+    logger.info("🔄 正在预热 MCP 客户端...")
+    try:
+        from app.agent.mcp_client import get_mcp_client_with_retry
+        mcp_client = await get_mcp_client_with_retry()
+        tools = await mcp_client.get_tools()
+        logger.info(f"✅ MCP 客户端预热完成，加载了 {len(tools)} 个工具")
+    except Exception as e:
+        logger.warning(f"⚠️ MCP 客户端预热失败: {e}，将在首次使用时重试")
+
     # 启动飞书机器人
     if config.feishu_enabled:
         logger.info("🔔 正在启动飞书机器人...")
