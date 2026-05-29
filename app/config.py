@@ -48,10 +48,15 @@ class Settings(BaseSettings):
     mcp_monitor_transport: str = "streamable-http"
     mcp_monitor_url: str = "http://localhost:8004/mcp"
 
+    # 新增 MCP 配置
+    mcp_supabase_transport: str = "streamable-http"
+    mcp_supabase_url: str = "https://uhkijolcmoxjkoznhpvl.supabase.co"
+    mcp_filesystem_path: str = r"D:\桌面\智能仓库"
+
     @property
     def mcp_servers(self) -> Dict[str, Dict[str, Any]]:
         """获取完整的 MCP 服务器配置"""
-        return {
+        servers = {
             "cls": {
                 "transport": self.mcp_cls_transport,
                 "url": self.mcp_cls_url,
@@ -61,6 +66,13 @@ class Settings(BaseSettings):
                 "url": self.mcp_monitor_url,
             }
         }
+        # 仅当 SUPABASE_API_KEY 配置后才添加
+        if hasattr(self, 'supabase_api_key') and self.supabase_api_key:
+            servers["supabase"] = {
+                "transport": self.mcp_supabase_transport,
+                "url": self.mcp_supabase_url,
+            }
+        return servers
 
 
 # 全局配置实例
