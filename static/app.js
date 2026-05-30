@@ -448,7 +448,7 @@ class SuperBizAgentApp {
             const response = await fetch(`/api/chat/session/${historyId}`);
             if (response.ok) {
                 const data = await response.json();
-                const backendHistory = data.history || [];
+                const backendHistory = (data.data?.result?.history) || [];
                 
                 // 更新会话ID
                 this.sessionId = history.id;
@@ -527,13 +527,13 @@ class SuperBizAgentApp {
             }
 
             const result = await response.json();
-            
-            if (result.status === 'success') {
+
+            if (result.data?.success) {
                 // 从本地存储中删除
                 this.chatHistories = this.chatHistories.filter(h => h.id !== historyId);
                 this.saveChatHistories();
                 this.renderChatHistory();
-                
+
                 // 如果删除的是当前对话，清空当前对话
                 if (this.sessionId === historyId) {
                     this.currentChatHistory = [];
@@ -543,10 +543,10 @@ class SuperBizAgentApp {
                     this.sessionId = this.generateSessionId();
                     this.checkAndSetCentered();
                 }
-                
+
                 this.showNotification('会话已清空', 'success');
             } else {
-                throw new Error(result.message || '清空会话失败');
+                throw new Error(result.data?.errorMessage || '清空会话失败');
             }
         } catch (error) {
             console.error('删除历史对话失败:', error);

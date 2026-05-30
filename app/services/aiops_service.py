@@ -3,12 +3,15 @@
 基于 LangGraph 官方教程实现
 """
 
+import os
+from pathlib import Path
 from typing import AsyncGenerator, Dict, Any
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from loguru import logger
 
 from app.agent.aiops import PlanExecuteState, planner, executor, replanner
+from app.tools.feishu_notifier import FeishuNotifier
 
 
 # 节点名称常量
@@ -249,13 +252,34 @@ class AIOpsService:
             # 转换事件格式以兼容旧的 API
             if event.get("type") == "complete":
                 # 将 response 包装为 diagnosis 格式
+                report = event.get("response", "")
+
+                # 保存报告到文件
+                report_dir = Path("D:/桌面/智能仓库/reports")
+                try:
+                    report_dir.mkdir(parents=True, exist_ok=True)
+                    report_file = report_dir / f"aiops_report_{session_id}.md"
+                    with open(report_file, "w", encoding="utf-8") as f:
+                        f.write(f"# AIOps 诊断报告\n\n**会话ID**: {session_id}\n\n---\n\n{report}")
+                    logger.info(f"报告已保存到: {report_file}")
+                except Exception as e:
+                    logger.error(f"保存报告失败: {e}")
+
+                # 推送飞书通知
+                try:
+                    feishu = FeishuNotifier()
+                    feishu.send_aiops_alert(session_id, report)
+                    logger.info("飞书通知已发送")
+                except Exception as e:
+                    logger.error(f"飞书通知发送失败: {e}")
+
                 yield {
                     "type": "complete",
                     "stage": "diagnosis_complete",
                     "message": "诊断流程完成",
                     "diagnosis": {
                         "status": "completed",
-                        "report": event.get("response", "")
+                        "report": report
                     }
                 }
             else:

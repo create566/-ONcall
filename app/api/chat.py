@@ -7,7 +7,7 @@ import json
 from fastapi import APIRouter, HTTPException
 from sse_starlette.sse import EventSourceResponse
 from app.models.request import ChatRequest, ClearRequest
-from app.models.response import SessionInfoResponse, ApiResponse, UnifiedResponse
+from app.models.response import UnifiedResponse
 from app.services.rag_agent_service import rag_agent_service
 from loguru import logger
 
@@ -155,7 +155,7 @@ async def chat_stream(request: ChatRequest):
     return EventSourceResponse(event_generator())
 
 
-@router.post("/chat/clear", response_model=ApiResponse)
+@router.post("/chat/clear")
 async def clear_session(request: ClearRequest):
     """清空会话历史
 
@@ -163,42 +163,43 @@ async def clear_session(request: ClearRequest):
         request: 清空请求
 
     Returns:
-        操作结果
+        统一格式的操作结果
     """
     try:
         success = rag_agent_service.clear_session(request.session_id)
         logger.info(f"清空会话: {request.session_id}, 结果: {success}")
 
-        return ApiResponse(
-            status="success" if success else "error",
-            message="会话已清空" if success else "清空会话失败",
-            data=None
+        return UnifiedResponse.success(
+            result={"session_id": request.session_id, "cleared": success},
+            message="会话已清空" if success else "清空会话失败"
         )
 
     except Exception as e:
         logger.error(f"清空会话错误: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return UnifiedResponse.error(error_message=str(e))
 
 
-@router.get("/chat/session/{session_id}", response_model=SessionInfoResponse)
-async def get_session_info(session_id: str) -> SessionInfoResponse:
+@router.get("/chat/session/{session_id}")
+async def get_session_info(session_id: str):
     """查询会话历史
 
     Args:
         session_id: 会话 ID
 
     Returns:
-        会话信息
+        统一格式的会话信息
     """
     try:
         history = rag_agent_service.get_session_history(session_id)
 
-        return SessionInfoResponse(
-            session_id=session_id,
-            message_count=len(history),
-            history=history
+        return UnifiedResponse.success(
+            result={
+                "session_id": session_id,
+                "message_count": len(history),
+                "history": history
+            }
         )
 
     except Exception as e:
         logger.error(f"获取会话信息错误: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return UnifiedResponse.error(error_message=str(e))

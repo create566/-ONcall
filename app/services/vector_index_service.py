@@ -9,6 +9,14 @@ from loguru import logger
 from app.services.document_splitter_service import document_splitter_service
 from app.services.vector_store_manager import vector_store_manager
 
+# 文档加载器
+try:
+    from langchain_community.document_loaders import PyPDFLoader, UnstructuredWordDocumentLoader
+    PDF_AVAILABLE = True
+except ImportError:
+    PDF_AVAILABLE = False
+    logger.warning("PyPDFLoader 不可用，PDF 支持将被禁用")
+
 
 class IndexingResult:
     """索引结果类"""
@@ -88,7 +96,12 @@ class VectorIndexService:
             result.directory_path = str(dir_path)
 
             # 获取所有支持的文件
-            files = list(dir_path.glob("*.txt")) + list(dir_path.glob("*.md"))
+            files = (
+                list(dir_path.glob("*.txt")) +
+                list(dir_path.glob("*.md")) +
+                list(dir_path.glob("*.pdf")) +
+                list(dir_path.glob("*.docx"))
+            )
 
             if not files:
                 logger.warning(f"目录中没有找到支持的文件: {target_path}")
@@ -130,7 +143,7 @@ class VectorIndexService:
 
     def index_single_file(self, file_path: str):
         """
-        索引单个文件 (使用新的 LangChain 分割器)
+        索引单个文件 (支持 txt/md/pdf/docx)
 
         Args:
             file_path: 文件路径
@@ -147,15 +160,25 @@ class VectorIndexService:
         logger.info(f"开始索引文件: {path}")
 
         try:
-            # 1. 读取文件内容
-            content = path.read_text(encoding="utf-8")
+            # 1. 根据文件类型读取内容
+            suffix = path.suffix.lower()
+            if suffix == ".pdf":
+                if not PDF_AVAILABLE:
+                    raise RuntimeError("PDF 支持未安装，请运行: pip install pymupdf")
+                content = self._read_pdf(path)
+            elif suffix == ".docx":
+                content = self._read_docx(path)
+            else:
+                # txt, md 等文本文件
+                content = path.read_text(encoding="utf-8")
+
             logger.info(f"读取文件: {path}, 内容长度: {len(content)} 字符")
 
             # 2. 删除该文件的旧数据（如果存在）
             normalized_path = path.as_posix()
             vector_store_manager.delete_by_source(normalized_path)
 
-            # 3. 使用新的文档分割器
+            # 3. 使用文档分割器
             documents = document_splitter_service.split_document(content, normalized_path)
             logger.info(f"文档分割完成: {file_path} -> {len(documents)} 个分片")
 
@@ -169,6 +192,18 @@ class VectorIndexService:
         except Exception as e:
             logger.error(f"索引文件失败: {file_path}, 错误: {e}")
             raise RuntimeError(f"索引文件失败: {e}") from e
+
+    def _read_pdf(self, path: Path) -> str:
+        """读取 PDF 文件内容"""
+        loader = PyPDFLoader(str(path))
+        docs = loader.load()
+        return "\n".join(doc.page_content for doc in docs)
+
+    def _read_docx(self, path: Path) -> str:
+        """读取 Docx 文件内容"""
+        loader = UnstructuredWordDocumentLoader(str(path))
+        docs = loader.load()
+        return "\n".join(doc.page_content for doc in docs)
 
 
 # 全局单例

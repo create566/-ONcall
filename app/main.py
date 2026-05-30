@@ -22,9 +22,8 @@ async def handle_feishu_message(open_id: str, text: str) -> str:
     """处理飞书消息，调用 RAG Agent"""
     try:
         logger.info(f"处理飞书消息: open_id={open_id}, text={text}")
-        result = await rag_agent_service.query(text)
-        answer = result.get("answer", "处理中，请稍候...")
-        return answer
+        answer = await rag_agent_service.query(text, session_id=open_id)
+        return answer if answer else "处理中，请稍候..."
     except Exception as e:
         logger.error(f"处理飞书消息失败: {e}")
         return "抱歉，处理消息时出现错误，请稍后再试。"

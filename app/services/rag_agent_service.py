@@ -21,6 +21,13 @@ from langchain_qwq import ChatQwen
 from app.config import config
 from app.tools import get_current_time, retrieve_knowledge
 from app.agent.mcp_client import get_mcp_client_with_retry
+from app.agent.doc_process.tools import (
+    read_document,
+    write_document,
+    list_documents,
+    vectorize_document,
+    search_vectorized_docs,
+)
 
 # 阿里千问大模型和langchain集成参考： https://docs.langchain.com/oss/python/integrations/chat/qwen
 # 注意：需要配置环境变量 DASHSCOPE_API_BASE=https://dashscope.aliyuncs.com/compatible-mode/v1 否则默认访问的是新加坡站点
@@ -91,7 +98,15 @@ class RagAgentService:
         )
 
         # 定义基础工具
-        self.tools = [retrieve_knowledge, get_current_time]
+        self.tools = [
+            retrieve_knowledge,
+            get_current_time,
+            read_document,
+            write_document,
+            list_documents,
+            vectorize_document,
+            search_vectorized_docs,
+        ]
 
         # MCP 客户端（延迟初始化，使用全局管理）
         self.mcp_tools: list = []

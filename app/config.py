@@ -25,9 +25,9 @@ class Settings(BaseSettings):
     port: int = 9900
 
     # DashScope 配置
-    dashscope_api_key: str = "sk-45684c72b0994d33bb564e27a0035d60"  # 默认空字符串，实际使用需从环境变量加载
+    dashscope_api_key: str = "sk-4c69e976439c463690cfaa583b11ba33"  # 默认空字符串，实际使用需从环境变量加载
     dashscope_model: str = "qwen-max"
-    dashscope_embedding_model: str = "text-embedding-v2"  # v4 支持多种维度（默认 1024）
+    dashscope_embedding_model: str = "text-embedding-v1"  # v4 支持多种维度（默认 1024）
 
     # Milvus 配置
     milvus_host: str = "localhost"
@@ -90,6 +90,9 @@ class Settings(BaseSettings):
                 "transport": "stdio",
                 "command": "npx",
                 "args": ["-y", "firecrawl-mcp"],
+                "env": {
+                    "FIRECRAWL_API_KEY": config.mcp_firecrawl_api_key,
+                },
             },
             "filesystem": {
                 "transport": "stdio",
